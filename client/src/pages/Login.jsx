@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import "animate.css"; // ✅ import animations
-import "../styles/global.css"; // ✅ import global styles
+import "animate.css";
+import "../styles/global.css";
 
 function Login() {
   const navigate = useNavigate();
@@ -15,12 +15,29 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // ✅ Call backend login
       const res = await API.post("/user/login", formData);
+
+      // ✅ Save token
       localStorage.setItem("token", res.data.token);
+
+      // ✅ Check role from backend response
       const role = res.data.role;
-      if (role === "patient") navigate("/patient");
-      else if (role === "doctor") navigate("/doctor");
-      else if (role === "admin") navigate("/admin");
+      if (!role) {
+        alert("Login failed: role not found");
+        return;
+      }
+
+      // ✅ Redirect based on role
+      if (role === "patient") {
+        navigate("/patient");
+      } else if (role === "doctor") {
+        navigate("/doctor");
+      } else if (role === "admin") {
+        navigate("/admin");
+      } else {
+        alert("Unknown role, please contact admin");
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
@@ -35,6 +52,7 @@ function Login() {
             type="email"
             name="email"
             placeholder="Email"
+            value={formData.email}
             onChange={handleChange}
             required
           />
@@ -42,6 +60,7 @@ function Login() {
             type="password"
             name="password"
             placeholder="Password"
+            value={formData.password}
             onChange={handleChange}
             required
           />
