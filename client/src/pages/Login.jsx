@@ -18,8 +18,9 @@ function Login() {
       // ✅ Call backend login
       const res = await API.post("/user/login", formData);
 
-      // ✅ Save token
+      // ✅ Save token + user info
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
       // ✅ Check role from backend response
       const role = res.data.role;

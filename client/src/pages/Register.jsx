@@ -12,6 +12,7 @@ function Register() {
     password: "",
     phone: "",
     role: "patient",
+    specialization: ""
   });
 
   const handleChange = (e) => {
@@ -21,23 +22,24 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/user/register", formData);
-      alert("Registered successfully!");
-      navigate("/"); // ✅ redirect to login after register
+      const res = await API.post("/user/register", formData);
+      alert(res.data.message);
+      navigate("/login");
     } catch (err) {
-      alert(err.response?.data?.message || "Error registering");
+      alert(err.response?.data?.message || "Registration failed");
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="card animate__animated animate__fadeInUp">
-        <h2 className="animate__animated animate__fadeIn">Create Account 🩺</h2>
+    <div className="register-container">
+      <div className="card animate__animated animate__fadeInDown">
+        <h2 className="animate__animated animate__fadeIn">Create Account 📝</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
             name="name"
-            placeholder="Full Name"
+            placeholder="Name"
+            value={formData.name}
             onChange={handleChange}
             required
           />
@@ -45,6 +47,7 @@ function Register() {
             type="email"
             name="email"
             placeholder="Email"
+            value={formData.email}
             onChange={handleChange}
             required
           />
@@ -52,6 +55,7 @@ function Register() {
             type="password"
             name="password"
             placeholder="Password"
+            value={formData.password}
             onChange={handleChange}
             required
           />
@@ -59,9 +63,10 @@ function Register() {
             type="text"
             name="phone"
             placeholder="Phone"
+            value={formData.phone}
             onChange={handleChange}
-            required
           />
+
           <select
             name="role"
             value={formData.role}
@@ -72,6 +77,18 @@ function Register() {
             <option value="doctor">Doctor</option>
             <option value="admin">Admin</option>
           </select>
+
+          {formData.role === "doctor" && (
+            <input
+              type="text"
+              name="specialization"
+              placeholder="Specialization"
+              value={formData.specialization}
+              onChange={handleChange}
+              required
+            />
+          )}
+
           <button
             type="submit"
             className="animate__animated animate__pulse animate__infinite"
@@ -80,8 +97,8 @@ function Register() {
           </button>
         </form>
         <p>
-          Have an account?{" "}
-          <span onClick={() => navigate("/")} className="register-link">
+          Already have an account?{" "}
+          <span onClick={() => navigate("/login")} className="login-link">
             Login here
           </span>
         </p>
