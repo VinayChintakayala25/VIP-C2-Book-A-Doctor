@@ -23,7 +23,9 @@ function Register() {
     e.preventDefault();
     try {
       const res = await API.post("/user/register", formData);
-      alert(res.data.message);
+      // ✅ Safe alert
+      alert(res.data?.message || "Registered successfully");
+      // ✅ Redirect to login
       navigate("/login");
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
