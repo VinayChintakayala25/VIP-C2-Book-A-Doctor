@@ -1,5 +1,12 @@
 const express = require("express");
-const { registerController, loginController } = require("../controllers/userController");
+const {
+  registerController,
+  loginController,
+  updateProfileController,
+  changePasswordController,
+  uploadProfilePictureController,
+} = require("../controllers/userController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -8,5 +15,14 @@ router.post("/register", registerController);
 
 // Login
 router.post("/login", loginController);
+
+// Update Profile
+router.put("/profile", authMiddleware, updateProfileController);
+
+// Change Password
+router.put("/change-password", authMiddleware, changePasswordController);
+
+// Upload Profile Picture
+router.put("/profile-picture", authMiddleware, uploadProfilePictureController);
 
 module.exports = router;
