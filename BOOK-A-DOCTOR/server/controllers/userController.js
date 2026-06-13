@@ -2,7 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Register
+// ✅ Register
 const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, role, specialization, hospital } = req.body;
@@ -33,11 +33,12 @@ const registerController = async (req, res) => {
       status: user.status,
     });
   } catch (err) {
+    console.error("Register error:", err);
     res.status(500).json({ message: "Error registering user" });
   }
 };
 
-// Login
+// ✅ Login
 const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -58,11 +59,23 @@ const loginController = async (req, res) => {
       message: "Login successful",
     });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: "Login failed" });
   }
 };
 
-// Update Profile
+// ✅ Get Profile
+const getProfileController = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching profile" });
+  }
+};
+
+// ✅ Update Profile
 const updateProfileController = async (req, res) => {
   try {
     const updates = req.body;
@@ -73,7 +86,7 @@ const updateProfileController = async (req, res) => {
   }
 };
 
-// Change Password
+// ✅ Change Password
 const changePasswordController = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
@@ -91,7 +104,7 @@ const changePasswordController = async (req, res) => {
   }
 };
 
-// Upload Profile Picture
+// ✅ Upload Profile Picture
 const uploadProfilePictureController = async (req, res) => {
   try {
     const { profilePicture } = req.body; // URL or path
@@ -105,6 +118,7 @@ const uploadProfilePictureController = async (req, res) => {
 module.exports = {
   registerController,
   loginController,
+  getProfileController,
   updateProfileController,
   changePasswordController,
   uploadProfilePictureController,

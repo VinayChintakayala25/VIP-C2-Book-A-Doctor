@@ -1,11 +1,11 @@
 const express = require("express");
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware"); // ✅ destructure correctly
 
 const router = express.Router();
 
-// ✅ Get approved doctors
+// Get approved doctors
 router.get("/doctors", authMiddleware, async (req, res) => {
   try {
     const doctors = await User.find({ role: "doctor", status: "approved" });
@@ -15,7 +15,7 @@ router.get("/doctors", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Get pending doctors
+// Get pending doctors
 router.get("/doctors/pending", authMiddleware, async (req, res) => {
   try {
     const doctors = await User.find({ role: "doctor", status: "pending" });
@@ -25,7 +25,7 @@ router.get("/doctors/pending", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Approve doctor
+// Approve doctor
 router.put("/doctors/:id/approve", authMiddleware, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.params.id, { status: "approved" });
@@ -35,7 +35,7 @@ router.put("/doctors/:id/approve", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Reject doctor
+// Reject doctor
 router.put("/doctors/:id/reject", authMiddleware, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.params.id, { status: "rejected" });
@@ -45,7 +45,7 @@ router.put("/doctors/:id/reject", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Manage patients (list all patients)
+// Manage patients (list all patients)
 router.get("/patients", authMiddleware, async (req, res) => {
   try {
     const patients = await User.find({ role: "patient" });
@@ -55,7 +55,7 @@ router.get("/patients", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Delete patient
+// Delete patient
 router.delete("/patients/:id", authMiddleware, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
@@ -65,7 +65,7 @@ router.delete("/patients/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Dashboard stats
+// Dashboard stats
 router.get("/stats", authMiddleware, async (req, res) => {
   try {
     const totalDoctors = await User.countDocuments({ role: "doctor" });

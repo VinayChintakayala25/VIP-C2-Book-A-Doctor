@@ -1,16 +1,15 @@
 const express = require("express");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware"); // ✅ destructure correctly
 const User = require("../models/User");
 const Appointment = require("../models/Appointment");
 
 const router = express.Router();
 
-// ✅ Get approved doctors (for patients to book/search)
+// Get approved doctors (for patients to book/search)
 router.get("/", async (req, res) => {
   try {
     const { specialization, hospital, name } = req.query;
 
-    // Build filters dynamically
     const filters = { role: "doctor", status: "approved" };
     if (specialization) filters.specialization = specialization;
     if (hospital) filters.hospital = hospital;
@@ -23,7 +22,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Doctor: Get their own appointments
+// Doctor: Get their own appointments
 router.get("/appointments", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "doctor") {
@@ -37,7 +36,7 @@ router.get("/appointments", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Doctor: Update profile (qualifications, fees, availability, etc.)
+// Doctor: Update profile
 router.put("/profile", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "doctor") {
@@ -51,7 +50,7 @@ router.put("/profile", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Doctor: Accept/Reject/Complete appointment
+// Doctor: Accept/Reject/Complete appointment
 router.put("/appointments/:id/status", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "doctor") {
@@ -69,7 +68,7 @@ router.put("/appointments/:id/status", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ Doctor: Reschedule appointment
+// Doctor: Reschedule appointment
 router.put("/appointments/:id/reschedule", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "doctor") {

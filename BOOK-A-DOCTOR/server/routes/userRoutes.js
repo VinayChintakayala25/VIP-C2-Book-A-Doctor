@@ -2,11 +2,12 @@ const express = require("express");
 const {
   registerController,
   loginController,
+  getProfileController,
   updateProfileController,
   changePasswordController,
   uploadProfilePictureController,
 } = require("../controllers/userController");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware"); // ✅ destructure correctly
 
 const router = express.Router();
 
@@ -15,6 +16,9 @@ router.post("/register", registerController);
 
 // Login
 router.post("/login", loginController);
+
+// Get Profile
+router.get("/profile", authMiddleware, getProfileController);
 
 // Update Profile
 router.put("/profile", authMiddleware, updateProfileController);

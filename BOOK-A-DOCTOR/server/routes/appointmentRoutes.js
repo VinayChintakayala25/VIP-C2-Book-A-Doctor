@@ -1,6 +1,6 @@
 const express = require("express");
 const Appointment = require("../models/Appointment");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware"); // ✅ destructure correctly
 
 const router = express.Router();
 
