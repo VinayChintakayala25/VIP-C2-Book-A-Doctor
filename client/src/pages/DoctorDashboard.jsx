@@ -190,23 +190,11 @@ function DoctorDashboard() {
 </div>
 
 
-        {/* Prescriptions Section */}
-<h2>Prescriptions</h2>
-<div className="card">
-  {prescriptions.length === 0 ? (
-    <p>No prescriptions available</p>
-  ) : (
-    prescriptions.map(rx => (
-      <div key={rx._id} className="prescription-card">
-        <p><b>Patient:</b> {rx.patientName}</p>
-        <p><b>Medicine:</b> {rx.medicine}</p>
-        <p><b>Dosage:</b> {rx.dosage}</p>
-        <p><b>Instructions:</b> {rx.instructions}</p>
-      </div>
-    ))
-  )}
-</div>
-
+        {/* Prescriptions Section (placeholder) */}
+        <h2>Prescriptions</h2>
+        <div className="card">
+          <p>Add / Update / Download prescriptions here (backend routes needed).</p>
+        </div>
 
         {/* Reports Section */}
         <h2>Reports</h2>
