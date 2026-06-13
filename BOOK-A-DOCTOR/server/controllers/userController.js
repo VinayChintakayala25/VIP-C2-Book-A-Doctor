@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 // Register
 const registerController = async (req, res) => {
   try {
-    const { name, email, password, phone, role, specialization } = req.body;
+    const { name, email, password, phone, role, specialization, hospital } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -19,9 +19,10 @@ const registerController = async (req, res) => {
       email,
       password: hashedPassword,
       phone,
-      role: role || "patient", // ✅ allow patient, doctor, admin
+      role: role || "patient",
       specialization: role === "doctor" ? specialization : undefined,
-      status: role === "doctor" ? "pending" : "active", // ✅ doctors start pending, admin/patient active
+      hospital: role === "doctor" ? hospital : undefined,
+      status: role === "doctor" ? "pending" : "active",
     });
 
     await user.save();
@@ -32,7 +33,6 @@ const registerController = async (req, res) => {
       status: user.status,
     });
   } catch (err) {
-    console.error("Register error:", err);
     res.status(500).json({ message: "Error registering user" });
   }
 };
@@ -43,40 +43,69 @@ const loginController = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
+    if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
+    if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
     res.json({
       token,
       role: user.role,
       status: user.status,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        specialization: user.specialization,
-        status: user.status,
-      },
+      user,
       message: "Login successful",
     });
   } catch (err) {
-    console.error("Login error:", err);
     res.status(500).json({ message: "Login failed" });
   }
 };
 
-module.exports = { registerController, loginController };
+// Update Profile
+const updateProfileController = async (req, res) => {
+  try {
+    const updates = req.body;
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
+    res.json({ message: "Profile updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating profile" });
+  }
+};
+
+// Change Password
+const changePasswordController = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Old password incorrect" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error changing password" });
+  }
+};
+
+// Upload Profile Picture
+const uploadProfilePictureController = async (req, res) => {
+  try {
+    const { profilePicture } = req.body; // URL or path
+    const user = await User.findByIdAndUpdate(req.user.id, { profilePicture }, { new: true });
+    res.json({ message: "Profile picture updated", user });
+  } catch (err) {
+    res.status(500).json({ message: "Error uploading profile picture" });
+  }
+};
+
+module.exports = {
+  registerController,
+  loginController,
+  updateProfileController,
+  changePasswordController,
+  uploadProfilePictureController,
+};
