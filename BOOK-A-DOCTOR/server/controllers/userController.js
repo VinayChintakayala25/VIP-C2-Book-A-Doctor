@@ -7,6 +7,10 @@ const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, role, specialization, hospital } = req.body;
 
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -31,10 +35,11 @@ const registerController = async (req, res) => {
       message: "User registered successfully",
       role: user.role,
       status: user.status,
+      user,
     });
   } catch (err) {
     console.error("Register error:", err);
-    res.status(500).json({ message: "Error registering user" });
+    res.status(500).json({ message: "Error registering user", error: err.message });
   }
 };
 
@@ -43,11 +48,19 @@ const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "JWT_SECRET not configured in .env" });
+    }
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
@@ -60,7 +73,7 @@ const loginController = async (req, res) => {
     });
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ message: "Login failed" });
+    res.status(500).json({ message: "Login failed", error: err.message });
   }
 };
 
@@ -71,7 +84,7 @@ const getProfileController = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json({ user });
   } catch (err) {
-    res.status(500).json({ message: "Error fetching profile" });
+    res.status(500).json({ message: "Error fetching profile", error: err.message });
   }
 };
 
@@ -82,7 +95,7 @@ const updateProfileController = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
     res.json({ message: "Profile updated successfully", user });
   } catch (err) {
-    res.status(500).json({ message: "Error updating profile" });
+    res.status(500).json({ message: "Error updating profile", error: err.message });
   }
 };
 
@@ -100,7 +113,7 @@ const changePasswordController = async (req, res) => {
 
     res.json({ message: "Password changed successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Error changing password" });
+    res.status(500).json({ message: "Error changing password", error: err.message });
   }
 };
 
@@ -111,7 +124,7 @@ const uploadProfilePictureController = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.user.id, { profilePicture }, { new: true });
     res.json({ message: "Profile picture updated", user });
   } catch (err) {
-    res.status(500).json({ message: "Error uploading profile picture" });
+    res.status(500).json({ message: "Error uploading profile picture", error: err.message });
   }
 };
 

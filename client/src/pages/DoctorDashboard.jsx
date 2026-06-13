@@ -3,15 +3,18 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import "animate.css";
 import "../styles/global.css";
-import { FaCalendarAlt, FaUser, FaSignOutAlt, FaUserCog } from "react-icons/fa";
+import { FaCalendarAlt, FaUser, FaSignOutAlt, FaUserCog, FaNotesMedical, FaChartBar } from "react-icons/fa";
 
 function DoctorDashboard() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [profile, setProfile] = useState({});
+  const [patients, setPatients] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [reports, setReports] = useState({});
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Fetch doctor profile + appointments
+  // Fetch doctor profile + appointments + patients + reports
   useEffect(() => {
     API.get("/doctors/appointments", {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -24,6 +27,18 @@ function DoctorDashboard() {
     })
       .then(res => setProfile(res.data.user || {}))
       .catch(() => alert("Error fetching profile"));
+
+    API.get("/admin/patients", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+      .then(res => setPatients(res.data.patients || []))
+      .catch(() => alert("Error fetching patients"));
+
+    API.get("/admin/stats", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+      .then(res => setReports(res.data || {}))
+      .catch(() => alert("Error fetching reports"));
   }, []);
 
   // Update appointment status
@@ -58,6 +73,19 @@ function DoctorDashboard() {
     }
   };
 
+  // Update profile
+  const handleProfileUpdate = async () => {
+    try {
+      const res = await API.put("/user/profile", profile, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      alert("Profile updated successfully");
+      setProfile(res.data.user);
+    } catch {
+      alert("Error updating profile");
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -73,6 +101,8 @@ function DoctorDashboard() {
           <li><FaCalendarAlt /> Appointments</li>
           <li><FaUser /> Patients</li>
           <li><FaUserCog /> Profile</li>
+          <li><FaNotesMedical /> Prescriptions</li>
+          <li><FaChartBar /> Reports</li>
           <li onClick={handleLogout}><FaSignOutAlt /> Logout</li>
         </ul>
       </div>
@@ -88,15 +118,13 @@ function DoctorDashboard() {
         {/* Profile Section */}
         <h2>My Profile</h2>
         <div className="card">
-          <p><b>Name:</b> {profile.name}</p>
-          <p><b>Email:</b> {profile.email}</p>
-          <p><b>Phone:</b> {profile.phone}</p>
-          <p><b>Specialization:</b> {profile.specialization}</p>
-          <p><b>Hospital:</b> {profile.hospital}</p>
-          <p><b>Qualifications:</b> {profile.qualifications?.join(", ")}</p>
-          <p><b>Experience:</b> {profile.experience}</p>
-          <p><b>Consultation Fees:</b> {profile.consultationFees}</p>
-          <p><b>Availability:</b> {profile.availability?.timeSlots?.join(", ")}</p>
+          <input value={profile.phone || ""} onChange={e => setProfile({ ...profile, phone: e.target.value })} placeholder="Phone" />
+          <input value={profile.specialization || ""} onChange={e => setProfile({ ...profile, specialization: e.target.value })} placeholder="Specialization" />
+          <input value={profile.hospital || ""} onChange={e => setProfile({ ...profile, hospital: e.target.value })} placeholder="Hospital" />
+          <input value={profile.qualifications?.join(", ") || ""} onChange={e => setProfile({ ...profile, qualifications: e.target.value.split(",") })} placeholder="Qualifications (comma separated)" />
+          <input value={profile.experience || ""} onChange={e => setProfile({ ...profile, experience: e.target.value })} placeholder="Experience" />
+          <input value={profile.consultationFees || ""} onChange={e => setProfile({ ...profile, consultationFees: e.target.value })} placeholder="Consultation Fees" />
+          <button onClick={handleProfileUpdate}>Save Profile</button>
         </div>
 
         {/* Appointments Section */}
@@ -143,6 +171,49 @@ function DoctorDashboard() {
               </tbody>
             </table>
           )}
+        </div>
+
+       {/* Patients Section */}
+<h2>My Patients</h2>
+<div className="card">
+  {patients.length === 0 ? (
+    <p>No patients found</p>
+  ) : (
+    patients.map(p => (
+      <div key={p._id} className="patient-card">
+        <p><b>Name:</b> {p.name}</p>
+        <p><b>Email:</b> {p.email}</p>
+        <p><b>Medical History:</b> {p.medicalHistory?.join(", ")}</p>
+      </div>
+    ))
+  )}
+</div>
+
+
+        {/* Prescriptions Section */}
+<h2>Prescriptions</h2>
+<div className="card">
+  {prescriptions.length === 0 ? (
+    <p>No prescriptions available</p>
+  ) : (
+    prescriptions.map(rx => (
+      <div key={rx._id} className="prescription-card">
+        <p><b>Patient:</b> {rx.patientName}</p>
+        <p><b>Medicine:</b> {rx.medicine}</p>
+        <p><b>Dosage:</b> {rx.dosage}</p>
+        <p><b>Instructions:</b> {rx.instructions}</p>
+      </div>
+    ))
+  )}
+</div>
+
+
+        {/* Reports Section */}
+        <h2>Reports</h2>
+        <div className="card">
+          <p><b>Total Patients:</b> {reports.totalPatients}</p>
+          <p><b>Total Appointments:</b> {reports.totalAppointments}</p>
+          <p><b>Total Doctors:</b> {reports.totalDoctors}</p>
         </div>
       </div>
     </div>
