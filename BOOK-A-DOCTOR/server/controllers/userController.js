@@ -2,13 +2,20 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// ✅ Register
 const registerController = async (req, res) => {
   try {
-    const { name, email, password, phone, role, specialization, hospital } = req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      role,
+      specialization,
+      hospital,
+    } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required" });
+      return res.status(400).json({ message: "Name, email and password are required" });
     }
 
     const existingUser = await User.findOne({ email });
@@ -32,25 +39,20 @@ const registerController = async (req, res) => {
     await user.save();
 
     res.status(201).json({
-      message: "User registered successfully",
-      role: user.role,
-      status: user.status,
+      message:
+        user.role === "doctor"
+          ? "Doctor registered successfully. Waiting for admin approval."
+          : "User registered successfully",
       user,
     });
   } catch (err) {
-    console.error("Register error:", err);
     res.status(500).json({ message: "Error registering user", error: err.message });
   }
 };
 
-// ✅ Login
 const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
-    }
 
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
@@ -58,11 +60,15 @@ const loginController = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ message: "JWT_SECRET not configured in .env" });
+    if (user.role === "doctor" && user.status !== "approved") {
+      return res.status(403).json({ message: "Doctor account is not approved yet" });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.json({
       token,
@@ -72,59 +78,82 @@ const loginController = async (req, res) => {
       message: "Login successful",
     });
   } catch (err) {
-    console.error("Login error:", err);
     res.status(500).json({ message: "Login failed", error: err.message });
   }
 };
 
-// ✅ Get Profile
 const getProfileController = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.user.id).select("-password");
     res.json({ user });
   } catch (err) {
-    res.status(500).json({ message: "Error fetching profile", error: err.message });
+    res.status(500).json({ message: "Error fetching profile" });
   }
 };
 
-// ✅ Update Profile
 const updateProfileController = async (req, res) => {
   try {
-    const updates = req.body;
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
+    delete req.body.password;
+    delete req.body.role;
+    delete req.body.status;
+
+    const user = await User.findByIdAndUpdate(req.user.id, req.body, {
+      new: true,
+    }).select("-password");
+
     res.json({ message: "Profile updated successfully", user });
   } catch (err) {
-    res.status(500).json({ message: "Error updating profile", error: err.message });
+    res.status(500).json({ message: "Error updating profile" });
   }
 };
 
-// ✅ Change Password
 const changePasswordController = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.id);
 
+    const user = await User.findById(req.user.id);
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Old password incorrect" });
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
 
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({ message: "Password changed successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Error changing password", error: err.message });
+    res.status(500).json({ message: "Error changing password" });
   }
 };
 
-// ✅ Upload Profile Picture
 const uploadProfilePictureController = async (req, res) => {
   try {
-    const { profilePicture } = req.body; // URL or path
-    const user = await User.findByIdAndUpdate(req.user.id, { profilePicture }, { new: true });
+    const { profilePicture } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { profilePicture },
+      { new: true }
+    ).select("-password");
+
     res.json({ message: "Profile picture updated", user });
   } catch (err) {
-    res.status(500).json({ message: "Error uploading profile picture", error: err.message });
+    res.status(500).json({ message: "Error updating profile picture" });
+  }
+};
+
+const uploadReportController = async (req, res) => {
+  try {
+    const { fileName, fileUrl } = req.body;
+
+    const user = await User.findById(req.user.id);
+    user.reports.push({ fileName, fileUrl });
+    await user.save();
+
+    res.json({ message: "Report uploaded successfully", reports: user.reports });
+  } catch (err) {
+    res.status(500).json({ message: "Error uploading report" });
   }
 };
 
@@ -135,4 +164,5 @@ module.exports = {
   updateProfileController,
   changePasswordController,
   uploadProfilePictureController,
+  uploadReportController,
 };

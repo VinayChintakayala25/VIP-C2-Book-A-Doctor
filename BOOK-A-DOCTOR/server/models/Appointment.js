@@ -2,26 +2,45 @@ const mongoose = require("mongoose");
 
 const appointmentSchema = new mongoose.Schema(
   {
-    patientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    patientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     patientName: { type: String, required: true },
-    doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    doctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     date: { type: Date, required: true },
-    timeSlot: { type: String }, // e.g. "10:00-11:00"
+    timeSlot: { type: String, required: true },
     reason: { type: String, required: true },
 
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "rescheduled", "completed", "cancelled"],
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "rescheduled",
+        "completed",
+        "cancelled",
+      ],
       default: "pending",
     },
 
-    notes: { type: String }, // doctor can add notes/prescription
+    notes: { type: String },
 
-    // ✅ Optional payment info
     payment: {
-      amount: { type: Number },
-      status: { type: String, enum: ["pending", "paid"], default: "pending" },
+      amount: { type: Number, default: 0 },
+      status: {
+        type: String,
+        enum: ["pending", "paid"],
+        default: "pending",
+      },
       transactionId: { type: String },
     },
 

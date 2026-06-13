@@ -13,20 +13,20 @@ const userSchema = new mongoose.Schema(
       default: "patient",
     },
 
-    // ✅ Doctor-specific fields
     specialization: { type: String },
     hospital: { type: String },
     qualifications: [{ type: String }],
     experience: { type: String },
-    consultationFees: { type: Number },
+    consultationFees: { type: Number, default: 0 },
+
     availability: {
-      days: [{ type: String }], // e.g. ["Monday", "Wednesday"]
-      timeSlots: [{ type: String }], // e.g. ["10:00-12:00", "14:00-16:00"]
+      days: [{ type: String }],
+      timeSlots: [{ type: String }],
       leaveDays: [{ type: Date }],
     },
 
-    // ✅ Patient-specific fields
     medicalHistory: [{ type: String }],
+
     reports: [
       {
         fileName: String,
@@ -35,8 +35,8 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ✅ Common fields
-    profilePicture: { type: String }, // URL or path
+    profilePicture: { type: String },
+
     status: {
       type: String,
       enum: ["pending", "approved", "active", "rejected"],
