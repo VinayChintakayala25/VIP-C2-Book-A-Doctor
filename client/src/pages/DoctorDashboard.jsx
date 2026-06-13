@@ -14,7 +14,6 @@ function DoctorDashboard() {
   const [reports, setReports] = useState({});
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Fetch doctor profile + appointments + patients + reports
   useEffect(() => {
     API.get("/doctors/appointments", {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -41,7 +40,6 @@ function DoctorDashboard() {
       .catch(() => alert("Error fetching reports"));
   }, []);
 
-  // Update appointment status
   const updateStatus = async (id, status) => {
     try {
       const res = await API.put(`/doctors/appointments/${id}/status`, { status }, {
@@ -54,7 +52,6 @@ function DoctorDashboard() {
     }
   };
 
-  // Reschedule appointment
   const rescheduleAppointment = async (id) => {
     const newDate = prompt("Enter new date (YYYY-MM-DD):");
     const newSlot = prompt("Enter new time slot (e.g. 14:00-15:00):");
@@ -73,7 +70,6 @@ function DoctorDashboard() {
     }
   };
 
-  // Update profile
   const handleProfileUpdate = async () => {
     try {
       const res = await API.put("/user/profile", profile, {
@@ -115,93 +111,106 @@ function DoctorDashboard() {
           <h2>Welcome Dr. {user.name}</h2>
         </div>
 
-        {/* Profile Section */}
-        <h2>My Profile</h2>
-        <div className="card">
-          <input value={profile.phone || ""} onChange={e => setProfile({ ...profile, phone: e.target.value })} placeholder="Phone" />
-          <input value={profile.specialization || ""} onChange={e => setProfile({ ...profile, specialization: e.target.value })} placeholder="Specialization" />
-          <input value={profile.hospital || ""} onChange={e => setProfile({ ...profile, hospital: e.target.value })} placeholder="Hospital" />
-          <input value={profile.qualifications?.join(", ") || ""} onChange={e => setProfile({ ...profile, qualifications: e.target.value.split(",") })} placeholder="Qualifications (comma separated)" />
-          <input value={profile.experience || ""} onChange={e => setProfile({ ...profile, experience: e.target.value })} placeholder="Experience" />
-          <input value={profile.consultationFees || ""} onChange={e => setProfile({ ...profile, consultationFees: e.target.value })} placeholder="Consultation Fees" />
-          <button onClick={handleProfileUpdate}>Save Profile</button>
-        </div>
+        {/* Grid Layout */}
+        <div className="grid-container">
+          {/* Profile Card */}
+          <div className="card">
+            <h2>My Profile</h2>
+            <input value={profile.phone || ""} onChange={e => setProfile({ ...profile, phone: e.target.value })} placeholder="Phone" />
+            <input value={profile.specialization || ""} onChange={e => setProfile({ ...profile, specialization: e.target.value })} placeholder="Specialization" />
+            <input value={profile.hospital || ""} onChange={e => setProfile({ ...profile, hospital: e.target.value })} placeholder="Hospital" />
+            <input value={profile.qualifications?.join(", ") || ""} onChange={e => setProfile({ ...profile, qualifications: e.target.value.split(",") })} placeholder="Qualifications (comma separated)" />
+            <input value={profile.experience || ""} onChange={e => setProfile({ ...profile, experience: e.target.value })} placeholder="Experience" />
+            <input value={profile.consultationFees || ""} onChange={e => setProfile({ ...profile, consultationFees: e.target.value })} placeholder="Consultation Fees" />
+            <button onClick={handleProfileUpdate}>Save Profile</button>
+          </div>
 
-        {/* Appointments Section */}
-        <h2>My Appointments</h2>
-        <div className="card animate__animated animate__fadeInUp">
-          {appointments.length === 0 ? (
-            <p>No appointments assigned</p>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Patient</th>
-                  <th>Date</th>
-                  <th>Time Slot</th>
-                  <th>Status</th>
-                  <th>Reason</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map(app => (
-                  <tr key={app._id}>
-                    <td>{app.patientName}</td>
-                    <td>{new Date(app.date).toLocaleDateString()}</td>
-                    <td>{app.timeSlot}</td>
-                    <td><span className={`status-badge ${app.status}`}>{app.status}</span></td>
-                    <td>{app.reason}</td>
-                    <td>
-                      {app.status === "pending" && (
-                        <>
-                          <button onClick={() => updateStatus(app._id, "approved")}>Approve</button>
-                          <button onClick={() => updateStatus(app._id, "rejected")}>Reject</button>
-                        </>
-                      )}
-                      {app.status === "approved" && (
-                        <>
-                          <button onClick={() => updateStatus(app._id, "completed")}>Complete</button>
-                          <button onClick={() => rescheduleAppointment(app._id)}>Reschedule</button>
-                        </>
-                      )}
-                    </td>
+          {/* Appointments Card */}
+          <div className="dashboard-card">
+            <h2>My Appointments</h2>
+            {appointments.length === 0 ? (
+              <p>No appointments assigned</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Time Slot</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </thead>
+                <tbody>
+                  {appointments.map(app => (
+                    <tr key={app._id}>
+                      <td>{app.patientName}</td>
+                      <td>{new Date(app.date).toLocaleDateString()}</td>
+                      <td>{app.timeSlot}</td>
+                      <td><span className={`status-badge ${app.status}`}>{app.status}</span></td>
+                      <td>{app.reason}</td>
+                      <td>
+                        {app.status === "pending" && (
+                          <>
+                            <button onClick={() => updateStatus(app._id, "approved")}>Approve</button>
+                            <button onClick={() => updateStatus(app._id, "rejected")}>Reject</button>
+                          </>
+                        )}
+                        {app.status === "approved" && (
+                          <>
+                            <button onClick={() => updateStatus(app._id, "completed")}>Complete</button>
+                            <button onClick={() => rescheduleAppointment(app._id)}>Reschedule</button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
 
-       {/* Patients Section */}
-<h2>My Patients</h2>
-<div className="card">
-  {patients.length === 0 ? (
-    <p>No patients found</p>
-  ) : (
-    patients.map(p => (
-      <div key={p._id} className="patient-card">
-        <p><b>Name:</b> {p.name}</p>
-        <p><b>Email:</b> {p.email}</p>
-        <p><b>Medical History:</b> {p.medicalHistory?.join(", ")}</p>
-      </div>
-    ))
-  )}
-</div>
+          {/* Patients Card */}
+          <div className="dashboard-card">
+            <h2>My Patients</h2>
+            {patients.length === 0 ? (
+              <p>No patients found</p>
+            ) : (
+              patients.map(p => (
+                <div key={p._id} className="patient-card">
+                  <p><b>Name:</b> {p.name}</p>
+                  <p><b>Email:</b> {p.email}</p>
+                  <p><b>Medical History:</b> {p.medicalHistory?.join(", ")}</p>
+                </div>
+              ))
+            )}
+          </div>
 
+          {/* Prescriptions Card */}
+          <div className="dashboard-card">
+            <h2>Prescriptions</h2>
+            {prescriptions.length === 0 ? (
+              <p>No prescriptions available</p>
+            ) : (
+              prescriptions.map(rx => (
+                <div key={rx._id} className="prescription-card">
+                  <p><b>Patient:</b> {rx.patientName}</p>
+                  <p><b>Medicine:</b> {rx.medicine}</p>
+                  <p><b>Dosage:</b> {rx.dosage}</p>
+                  <p><b>Instructions:</b> {rx.instructions}</p>
+                </div>
+              ))
+            )}
+          </div>
 
-        {/* Prescriptions Section (placeholder) */}
-        <h2>Prescriptions</h2>
-        <div className="card">
-          <p>Add / Update / Download prescriptions here (backend routes needed).</p>
-        </div>
-
-        {/* Reports Section */}
-        <h2>Reports</h2>
-        <div className="card">
-          <p><b>Total Patients:</b> {reports.totalPatients}</p>
-          <p><b>Total Appointments:</b> {reports.totalAppointments}</p>
-          <p><b>Total Doctors:</b> {reports.totalDoctors}</p>
+          {/* Reports Card */}
+          <div className="dashboard-card">
+            <h2>Reports</h2>
+            <p><b>Total Patients:</b> {reports.totalPatients}</p>
+            <p><b>Total Appointments:</b> {reports.totalAppointments}</p>
+            <p><b>Total Doctors:</b> {reports.totalDoctors}</p>
+          </div>
         </div>
       </div>
     </div>
