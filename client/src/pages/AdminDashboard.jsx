@@ -3,21 +3,31 @@ import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import "animate.css";
 import "../styles/global.css";
-import { FaUserMd, FaUsers, FaCalendarAlt, FaSignOutAlt } from "react-icons/fa";
+import { FaUserMd, FaUsers, FaCalendarAlt, FaSignOutAlt, FaChartBar } from "react-icons/fa";
 
 function AdminDashboard() {
   const navigate = useNavigate();
   const [pendingDoctors, setPendingDoctors] = useState([]);
   const [allDoctors, setAllDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [stats, setStats] = useState({ totalDoctors: 0, totalPatients: 0, totalAppointments: 0 });
 
   useEffect(() => {
     API.get("/admin/doctors/pending")
       .then(res => setPendingDoctors(res.data.doctors || []))
-      .catch(err => alert("Error fetching pending doctors"));
+      .catch(() => alert("Error fetching pending doctors"));
 
     API.get("/admin/doctors")
       .then(res => setAllDoctors(res.data.doctors || []))
-      .catch(err => alert("Error fetching all doctors"));
+      .catch(() => alert("Error fetching all doctors"));
+
+    API.get("/admin/patients")
+      .then(res => setPatients(res.data.patients || []))
+      .catch(() => alert("Error fetching patients"));
+
+    API.get("/admin/stats")
+      .then(res => setStats(res.data || {}))
+      .catch(() => alert("Error fetching stats"));
   }, []);
 
   const approveDoctor = async (id) => {
@@ -25,10 +35,8 @@ function AdminDashboard() {
       await API.put(`/admin/doctors/${id}/approve`);
       alert("Doctor approved!");
       setPendingDoctors(prev => prev.filter(doc => doc._id !== id));
-      setAllDoctors(prev =>
-        prev.map(doc => doc._id === id ? { ...doc, status: "approved" } : doc)
-      );
-    } catch (err) {
+      setAllDoctors(prev => prev.map(doc => doc._id === id ? { ...doc, status: "approved" } : doc));
+    } catch {
       alert("Error approving doctor");
     }
   };
@@ -38,12 +46,26 @@ function AdminDashboard() {
       await API.put(`/admin/doctors/${id}/reject`);
       alert("Doctor rejected!");
       setPendingDoctors(prev => prev.filter(doc => doc._id !== id));
-      setAllDoctors(prev =>
-        prev.map(doc => doc._id === id ? { ...doc, status: "rejected" } : doc)
-      );
-    } catch (err) {
+      setAllDoctors(prev => prev.map(doc => doc._id === id ? { ...doc, status: "rejected" } : doc));
+    } catch {
       alert("Error rejecting doctor");
     }
+  };
+
+  const deletePatient = async (id) => {
+    try {
+      await API.delete(`/admin/patients/${id}`);
+      alert("Patient deleted!");
+      setPatients(prev => prev.filter(p => p._id !== id));
+    } catch {
+      alert("Error deleting patient");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
   };
 
   return (
@@ -53,9 +75,10 @@ function AdminDashboard() {
         <h2>Admin Panel</h2>
         <ul>
           <li><FaUserMd /> Doctors</li>
-          <li><FaUsers /> Users</li>
+          <li><FaUsers /> Patients</li>
           <li><FaCalendarAlt /> Appointments</li>
-          <li onClick={() => navigate("/")}><FaSignOutAlt /> Logout</li>
+          <li><FaChartBar /> Stats</li>
+          <li onClick={handleLogout}><FaSignOutAlt /> Logout</li>
         </ul>
       </div>
 
@@ -66,9 +89,17 @@ function AdminDashboard() {
           <h2>Welcome Admin 🛠️</h2>
         </div>
 
+        {/* Stats Section */}
+        <h2>Dashboard Stats</h2>
+        <div className="card">
+          <p><b>Total Doctors:</b> {stats.totalDoctors}</p>
+          <p><b>Total Patients:</b> {stats.totalPatients}</p>
+          <p><b>Total Appointments:</b> {stats.totalAppointments}</p>
+        </div>
+
         {/* Pending Doctors */}
         <h2>Pending Doctors</h2>
-        <div className="card animate__animated animate__fadeInUp">
+        <div className="card">
           {pendingDoctors.length === 0 ? (
             <p>No pending doctors</p>
           ) : (
@@ -86,11 +117,7 @@ function AdminDashboard() {
                   <tr key={doc._id}>
                     <td>{doc.name}</td>
                     <td>{doc.specialization}</td>
-                    <td>
-                      <span className={`status-badge ${doc.status}`}>
-                        {doc.status}
-                      </span>
-                    </td>
+                    <td><span className={`status-badge ${doc.status}`}>{doc.status}</span></td>
                     <td>
                       <button onClick={() => approveDoctor(doc._id)}>Approve</button>
                       <button onClick={() => rejectDoctor(doc._id)}>Reject</button>
@@ -104,7 +131,7 @@ function AdminDashboard() {
 
         {/* All Doctors */}
         <h2>All Doctors</h2>
-        <div className="card animate__animated animate__fadeInUp">
+        <div className="card">
           {allDoctors.length === 0 ? (
             <p>No doctors found</p>
           ) : (
@@ -121,11 +148,36 @@ function AdminDashboard() {
                   <tr key={doc._id}>
                     <td>{doc.name}</td>
                     <td>{doc.specialization}</td>
-                    <td>
-                      <span className={`status-badge ${doc.status}`}>
-                        {doc.status}
-                      </span>
-                    </td>
+                    <td><span className={`status-badge ${doc.status}`}>{doc.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Patients Section */}
+        <h2>Patients</h2>
+        <div className="card">
+          {patients.length === 0 ? (
+            <p>No patients found</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {patients.map((p) => (
+                  <tr key={p._id}>
+                    <td>{p.name}</td>
+                    <td>{p.email}</td>
+                    <td>{p.phone}</td>
+                    <td><button onClick={() => deletePatient(p._id)}>Delete</button></td>
                   </tr>
                 ))}
               </tbody>
