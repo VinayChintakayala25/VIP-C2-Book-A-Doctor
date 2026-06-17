@@ -1,4 +1,5 @@
 const express = require("express");
+
 const {
   registerController,
   loginController,
@@ -6,7 +7,6 @@ const {
   updateProfileController,
   changePasswordController,
   uploadProfilePictureController,
-  uploadReportController,
 } = require("../controllers/userController");
 
 const { authMiddleware } = require("../middleware/authMiddleware");
@@ -21,16 +21,6 @@ router.put("/profile", authMiddleware, updateProfileController);
 
 router.put("/change-password", authMiddleware, changePasswordController);
 
-router.put(
-  "/profile-picture",
-  authMiddleware,
-  uploadProfilePictureController
-);
-
-router.post(
-  "/reports/upload",
-  authMiddleware,
-  uploadReportController
-);
+router.put("/profile-picture", authMiddleware, uploadProfilePictureController);
 
 module.exports = router;
